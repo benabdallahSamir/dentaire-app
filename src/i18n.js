@@ -23,13 +23,26 @@ const resources = {
       },
       sidebar: {
         dashboard: "Dashboard",
-        patients: "Patients",
-        patientMngm: "Patient Mngm",
+        patient: "Patients",
         rendezVous: "Rendez Vous",
         session: "Sessions",
         users: "Users",
         setting: "Settings",
         logout: "Logout",
+      },
+      sessions: {
+        title: "Session Records",
+        single: {
+          add: "Add Session"
+        },
+        table: {
+          id: "ID",
+          patient: "PATIENT",
+          date: "DATE",
+          price: "Price",
+          note: "NOTE",
+          actions: "ACTIONS"
+        }
       },
       theme: {
         dark: "Dark",
@@ -57,13 +70,26 @@ const resources = {
       },
       sidebar: {
         dashboard: "Tableau de Bord",
-        patients: "Patients",
-        patientMngm: "Gestion Patients",
+        patient: "Patients",
         rendezVous: "Rendez-vous",
         session: "Sessions",
         users: "Utilisateurs",
         setting: "Paramètres",
         logout: "Déconnexion",
+      },
+      sessions: {
+        title: "Historique des sessions",
+        single: {
+          add: "Ajouter une session"
+        },
+        table: {
+          id: "ID",
+          patient: "PATIENT",
+          date: "DATE",
+          price: "Prix",
+          note: "NOTE",
+          actions: "ACTIONS"
+        }
       },
       theme: {
         dark: "Sombre",
@@ -91,13 +117,26 @@ const resources = {
       },
       sidebar: {
         dashboard: "لوحة التحكم",
-        patients: "المرضى",
-        patientMngm: "إدارة المرضى",
+        patient: "المرضى",
         rendezVous: "المواعيد",
         session: "الجلسات",
         users: "المستخدمين",
         setting: "الإعدادات",
         logout: "تسجيل الخروج",
+      },
+      sessions: {
+        title: "سجل الجلسات",
+        single: {
+          add: "إضافة جلسة"
+        },
+        table: {
+          id: "ID",
+          patient: "المريض",
+          date: "التاريخ",
+          price: "السعر",
+          note: "ملاحظة",
+          actions: "الإجراءات"
+        }
       },
       theme: {
         dark: "داكن",

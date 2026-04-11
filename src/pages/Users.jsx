@@ -75,8 +75,8 @@ function Users() {
           text: result.message,
           timer: 2000,
           showConfirmButton: false,
-          background: 'var(--bg-color)',
-          color: 'var(--text-color)'
+          background: 'var(--swal-bg)',
+          color: 'var(--swal-color)'
         });
         await fetchUsers();
         setIsModalOpen(false);
@@ -110,8 +110,8 @@ function Users() {
       confirmButtonColor: '#06b6d4',
       cancelButtonColor: '#ef4444',
       confirmButtonText: 'Yes, drop!',
-      background: 'var(--bg-color)',
-      color: 'var(--text-color)'
+      background: 'var(--swal-bg)',
+      color: 'var(--swal-color)'
     });
 
     if (isConfirmed) {

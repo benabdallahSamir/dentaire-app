@@ -32,7 +32,32 @@ function initDB() {
       address TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS packages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      package_id TEXT UNIQUE NOT NULL,
+      patient_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      total_price REAL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (patient_id) REFERENCES patients(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id TEXT UNIQUE NOT NULL,
+      patient_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      amount REAL,
+      package_id INTEGER,
+      note TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (patient_id) REFERENCES patients(id),
+      FOREIGN KEY (package_id) REFERENCES packages(id)
+    );
   `);
+
+  db.exec("PRAGMA foreign_keys = ON;");
 
   // Seed default admin user if no users exist
   seedAdminUser();
@@ -191,6 +216,133 @@ function deletePatient(id) {
   }
 }
 
+// Sessions
+function getSessions() {
+  try {
+    const stmt = db.prepare(`
+      SELECT s.*, p.name as patient_name
+      FROM sessions s
+      JOIN patients p ON s.patient_id = p.id
+      ORDER BY s.id DESC
+    `);
+    const sessions = stmt.all();
+    return { success: true, sessions };
+  } catch (err) {
+    console.error('Database Get Sessions Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function getSessionsByPatient(patientId) {
+  try {
+    const stmt = db.prepare('SELECT * FROM sessions WHERE patient_id = ? ORDER BY date DESC');
+    const sessions = stmt.all(patientId);
+    return { success: true, sessions };
+  } catch (err) {
+    console.error('Database Get Patient Sessions Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function createSession(patient_id, date, amount, note) {
+  try {
+    const lastStmt = db.prepare('SELECT session_id FROM sessions ORDER BY id DESC LIMIT 1');
+    const last = lastStmt.get();
+    let nextId = 'SS-001';
+    if (last) {
+      const num = parseInt(last.session_id.split('-')[1]);
+      nextId = `SS-${(num + 1).toString().padStart(3, '0')}`;
+    }
+
+    const stmt = db.prepare('INSERT INTO sessions (session_id, patient_id, date, amount, note) VALUES (?, ?, ?, ?, ?)');
+    const result = stmt.run(nextId, patient_id, date, amount, note);
+    return { success: true, message: 'Session created successfully', id: result.lastInsertRowid };
+  } catch (err) {
+    console.error('Database Create Session Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function updateSession(id, patient_id, date, amount, note) {
+  try {
+    const stmt = db.prepare('UPDATE sessions SET patient_id = ?, date = ?, amount = ?, note = ? WHERE id = ?');
+    stmt.run(patient_id, date, amount, note, id);
+    return { success: true, message: 'Session updated successfully' };
+  } catch (err) {
+    console.error('Database Update Session Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function deleteSession(id) {
+  try {
+    const stmt = db.prepare('DELETE FROM sessions WHERE id = ?');
+    stmt.run(id);
+    return { success: true, message: 'Session deleted successfully' };
+  } catch (err) {
+    console.error('Database Delete Session Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+// Packages
+function getPackages() {
+  try {
+    const stmt = db.prepare(`
+      SELECT pk.*, p.name as patient_name
+      FROM packages pk
+      JOIN patients p ON pk.patient_id = p.id
+      ORDER BY pk.id DESC
+    `);
+    const packages = stmt.all();
+    return { success: true, packages };
+  } catch (err) {
+    console.error('Database Get Packages Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function getPackagesByPatient(patientId) {
+  try {
+    const stmt = db.prepare('SELECT * FROM packages WHERE patient_id = ? ORDER BY created_at DESC');
+    const packages = stmt.all(patientId);
+    return { success: true, packages };
+  } catch (err) {
+    console.error('Database Get Patient Packages Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function createPackage(patient_id, name, total_price) {
+  try {
+    const lastStmt = db.prepare('SELECT package_id FROM packages ORDER BY id DESC LIMIT 1');
+    const last = lastStmt.get();
+    let nextId = 'MS-001';
+    if (last) {
+      const num = parseInt(last.package_id.split('-')[1]);
+      nextId = `MS-${(num + 1).toString().padStart(3, '0')}`;
+    }
+
+    const stmt = db.prepare('INSERT INTO packages (package_id, patient_id, name, total_price) VALUES (?, ?, ?, ?)');
+    const result = stmt.run(nextId, patient_id, name, total_price);
+    return { success: true, message: 'Package created successfully', id: result.lastInsertRowid };
+  } catch (err) {
+    console.error('Database Create Package Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function deletePackage(id) {
+  try {
+    const stmt = db.prepare('DELETE FROM packages WHERE id = ?');
+    stmt.run(id);
+    return { success: true, message: 'Package deleted successfully' };
+  } catch (err) {
+    console.error('Database Delete Package Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
 module.exports = {
   initDB,
   verifyUser,
@@ -202,5 +354,14 @@ module.exports = {
   createPatient,
   updatePatient,
   deletePatient,
+  getSessions,
+  getSessionsByPatient,
+  createSession,
+  updateSession,
+  deleteSession,
+  getPackages,
+  getPackagesByPatient,
+  createPackage,
+  deletePackage,
   ping: () => true
 };

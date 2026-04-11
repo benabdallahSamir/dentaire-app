@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const { initDB, verifyUser, getUsers, createUser, deleteUser, updateUser, getPatients, createPatient, updatePatient, deletePatient, ping } = require('./database');
+const { initDB, verifyUser, getUsers, createUser, deleteUser, updateUser, getPatients, createPatient, updatePatient, deletePatient, getSessions, getSessionsByPatient, createSession, updateSession, deleteSession, getPackages, getPackagesByPatient, createPackage, deletePackage, ping } = require('./database');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -67,6 +67,49 @@ app.whenReady().then(() => {
   ipcMain.handle('deletePatient', async (event, id) => {
     console.log('[IPC] Deleting patient ID:', id);
     return deletePatient(id);
+  });
+
+  // Session Handlers
+  ipcMain.handle('getSessions', async () => {
+    console.log('[IPC] Fetching sessions from DB...');
+    return getSessions();
+  });
+
+  ipcMain.handle('createSession', async (event, patient_id, date, amount, note) => {
+    return createSession(patient_id, date, amount, note);
+  });
+
+  ipcMain.handle('updateSession', async (event, id, patient_id, date, amount, note) => {
+    return updateSession(id, patient_id, date, amount, note);
+  });
+
+  ipcMain.handle('deleteSession', async (event, id) => {
+    console.log('[IPC] Deleting session ID:', id);
+    return deleteSession(id);
+  });
+
+  ipcMain.handle('getSessionsByPatient', async (event, patientId) => {
+    return getSessionsByPatient(patientId);
+  });
+
+  // Package Handlers
+  ipcMain.handle('getPackages', async () => {
+    console.log('[IPC] Fetching packages from DB...');
+    return getPackages();
+  });
+
+  ipcMain.handle('createPackage', async (event, patient_id, name, total_price) => {
+    console.log('[IPC] Creating new package in DB');
+    return createPackage(patient_id, name, total_price);
+  });
+
+  ipcMain.handle('deletePackage', async (event, id) => {
+    console.log('[IPC] Deleting package ID:', id);
+    return deletePackage(id);
+  });
+
+  ipcMain.handle('getPackagesByPatient', async (event, patientId) => {
+    return getPackagesByPatient(patientId);
   });
 
   // Then initialize the database

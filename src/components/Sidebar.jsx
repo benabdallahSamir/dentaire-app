@@ -18,8 +18,8 @@ function Sidebar() {
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Yes, Logout',
-      background: 'var(--bg-color)',
-      color: 'var(--text-color)'
+      background: 'var(--swal-bg)',
+      color: 'var(--swal-color)'
     });
 
     if (isConfirmed) {
@@ -33,8 +33,7 @@ function Sidebar() {
   const isAdmin = user.role === 'admin';
 
   const navItems = [
-    { label: t('sidebar.patients'), icon: '👥', path: '/patients' },
-    { label: t('sidebar.patientMngm'), icon: '📝', path: '/patient-management' },
+    { label: t('sidebar.patient'), icon: '👥', path: '/patient' },
     { label: t('sidebar.rendezVous'), icon: '📅', path: '/appointments' },
     { label: t('sidebar.session'), icon: '⏱️', path: '/sessions' },
     isAdmin && { label: t('sidebar.users'), icon: '👨‍⚕️', path: '/users' },

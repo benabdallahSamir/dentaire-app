@@ -29,8 +29,8 @@ function Auth() {
           icon: 'error',
           title: 'Login Failed',
           text: response.message,
-          background: 'var(--bg-color)',
-          color: 'var(--text-color)',
+          background: 'var(--swal-bg)',
+          color: 'var(--swal-color)',
           confirmButtonColor: '#06b6d4'
         });
       }

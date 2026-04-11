@@ -37,9 +37,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<Auth />} />
           {/* Redirect to patients by default now that dashboard is removed */}
-          <Route path="/" element={<Navigate to="/patients" replace />} />
-          <Route path="/patients" element={<ProtectedRoute><Patients /></ProtectedRoute>} />
-          <Route path="/patient-management" element={<ProtectedRoute><PatientManagement /></ProtectedRoute>} />
+          <Route path="/" element={<Navigate to="/patient" replace />} />
+          <Route path="/patient" element={<ProtectedRoute><PatientManagement /></ProtectedRoute>} />
           <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
           <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute requiredRole="admin"><Users /></ProtectedRoute>} />
