@@ -1,11 +1,13 @@
 import DashboardLayout from '../layouts/DashboardLayout';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import PatientDetailsPanel from '../components/PatientDetailsPanel';
 
 function PatientManagement() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -146,8 +148,7 @@ function PatientManagement() {
   };
 
   const openDetailsPanel = (patient) => {
-    setActivePatient(patient);
-    setIsDetailsOpen(true);
+    navigate(`/patient/${patient.id}`);
   };
 
   const closePanel = () => {
@@ -181,15 +182,15 @@ function PatientManagement() {
         
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-black text-neutral-900 dark:text-white">Patient Management</h1>
+          <h1 className="text-2xl font-black text-neutral-900">Patient Management</h1>
           <div className="flex gap-2">
-            <button className="w-10 h-10 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center text-neutral-500 shadow-sm transition-all hover:bg-neutral-50">🔔</button>
+            <button className="w-10 h-10 rounded-xl bg-white border border-neutral-200 flex items-center justify-center text-neutral-500 shadow-sm transition-all hover:bg-neutral-50">🔔</button>
             <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30">AD</div>
           </div>
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 p-6 rounded-3xl shadow-sm mb-8">
+        <div className="bg-white border border-neutral-100 p-6 rounded-3xl shadow-sm mb-8">
           <div className="flex items-center gap-2 mb-4 text-xs font-bold text-neutral-400 uppercase tracking-widest">
             <span>🛡️</span> Search & Filter
           </div>
@@ -203,7 +204,7 @@ function PatientManagement() {
                   value={filters.name}
                   onChange={(e) => setFilters({...filters, name: e.target.value})}
                   placeholder="e.g. Amina" 
-                  className="w-full pl-9 pr-4 py-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white transition-all font-medium"
+                  className="w-full pl-9 pr-4 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all font-medium"
                 />
               </div>
             </div>
@@ -214,7 +215,7 @@ function PatientManagement() {
                 value={filters.patientId}
                 onChange={(e) => setFilters({...filters, patientId: e.target.value})}
                 placeholder="P-001" 
-                className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white transition-all font-medium"
+                className="w-full px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all font-medium"
               />
             </div>
             <div>
@@ -224,7 +225,7 @@ function PatientManagement() {
                 value={filters.phone}
                 onChange={(e) => setFilters({...filters, phone: e.target.value})}
                 placeholder="0661..." 
-                className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white transition-all font-medium"
+                className="w-full px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all font-medium"
               />
             </div>
             <div>
@@ -233,7 +234,7 @@ function PatientManagement() {
                 type="date" 
                 value={filters.dobFrom}
                 onChange={(e) => setFilters({...filters, dobFrom: e.target.value})}
-                className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white transition-all"
+                className="w-full px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -243,12 +244,12 @@ function PatientManagement() {
                   type="date" 
                   value={filters.dobTo}
                   onChange={(e) => setFilters({...filters, dobTo: e.target.value})}
-                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white transition-all"
+                  className="w-full px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all"
                 />
               </div>
               <button 
                 onClick={clearFilters}
-                className="h-10 px-4 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-sm font-bold rounded-xl hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors whitespace-nowrap"
+                className="h-10 px-4 bg-neutral-100 text-neutral-600 text-sm font-bold rounded-xl hover:bg-neutral-200 transition-colors whitespace-nowrap"
               >
                 Clear
               </button>
@@ -257,10 +258,10 @@ function PatientManagement() {
         </div>
 
         {/* Table Area */}
-        <div className="flex-1 min-h-0 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-3xl shadow-sm flex flex-col overflow-hidden">
-          <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-black/20">
-            <h2 className="font-bold text-neutral-800 dark:text-white flex items-center gap-2 uppercase tracking-tight">
-              Patient records <span className="text-[10px] px-2 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-full font-black tracking-widest">{filteredPatients.length}</span>
+        <div className="flex-1 min-h-0 bg-white border border-neutral-100 rounded-3xl shadow-sm flex flex-col overflow-hidden">
+          <div className="p-6 border-b border-neutral-100 flex justify-between items-center bg-neutral-50/50">
+            <h2 className="font-bold text-neutral-800 flex items-center gap-2 uppercase tracking-tight">
+              Patient records <span className="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full font-black tracking-widest">{filteredPatients.length}</span>
             </h2>
             <button 
               onClick={openAddPanel}
@@ -272,15 +273,15 @@ function PatientManagement() {
 
           <div className="flex-1 overflow-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-white dark:bg-neutral-900 z-10">
-                <tr className="text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-800/20">
+              <thead className="sticky top-0 bg-white z-10">
+                <tr className="text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-neutral-100 bg-neutral-50/30">
                   <th className="p-6">ID</th>
                   <th className="p-6">Name</th>
                   <th className="p-6">Phone</th>
                   <th className="p-6 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-50 dark:divide-neutral-800">
+              <tbody className="divide-y divide-neutral-50">
                 {loading ? (
                    <tr><td colSpan="4" className="p-20 text-center"><div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div></td></tr>
                 ) : filteredPatients.length === 0 ? (
@@ -289,15 +290,15 @@ function PatientManagement() {
                   <tr 
                     key={p.id} 
                     onClick={() => openDetailsPanel(p)}
-                    className="group hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-all text-sm cursor-pointer"
+                    className="group hover:bg-neutral-50 transition-all text-sm cursor-pointer"
                   >
                     <td className="p-6 font-mono text-neutral-400 group-hover:text-blue-500 transition-colors">{p.patient_id}</td>
-                    <td className="p-6 font-bold text-neutral-800 dark:text-white capitalize group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{p.name}</td>
+                    <td className="p-6 font-bold text-neutral-800 capitalize group-hover:text-blue-600 transition-colors">{p.name}</td>
                     <td className="p-6 text-neutral-500 font-medium">{p.phone}</td>
                     <td className="p-6">
                       <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => openEditPanel(p)} className="w-9 h-9 rounded-xl border border-neutral-200 dark:border-neutral-700 flex items-center justify-center hover:bg-white dark:hover:bg-neutral-800 hover:shadow-lg transition-all text-neutral-400 hover:text-blue-500">📝</button>
-                        <button onClick={() => handleDelete(p.id, p.name)} className="w-9 h-9 rounded-xl border border-neutral-200 dark:border-neutral-700 flex items-center justify-center hover:bg-white dark:hover:bg-neutral-800 hover:shadow-lg transition-all text-neutral-400 hover:text-red-500">🗑️</button>
+                        <button onClick={() => openEditPanel(p)} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center hover:bg-white hover:shadow-lg transition-all text-neutral-400 hover:text-blue-500">📝</button>
+                        <button onClick={() => handleDelete(p.id, p.name)} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center hover:bg-white hover:shadow-lg transition-all text-neutral-400 hover:text-red-500">🗑️</button>
                       </div>
                     </td>
                   </tr>
@@ -314,10 +315,10 @@ function PatientManagement() {
         />
 
         {/* Sliding Sidebar Panel */}
-        <div className={`fixed inset-y-0 right-0 w-96 bg-white dark:bg-neutral-900 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out border-l border-neutral-100 dark:border-neutral-800 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`fixed inset-y-0 right-0 w-96 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out border-l border-neutral-100 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="h-full flex flex-col">
-            <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
-              <h3 className="font-bold text-lg text-neutral-800 dark:text-white">{isEditMode ? 'Edit patient' : 'Add new patient'}</h3>
+            <div className="p-6 border-b border-neutral-100 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-neutral-800">{isEditMode ? 'Edit patient' : 'Add new patient'}</h3>
               <button onClick={closePanel} className="text-neutral-400 hover:text-red-500 transition-colors text-xl">✕</button>
             </div>
             
@@ -330,7 +331,7 @@ function PatientManagement() {
                   type="text" 
                   value={targetPatient.name}
                   onChange={(e) => setTargetPatient({...targetPatient, name: e.target.value})}
-                  className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-blue-500 dark:text-white"
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500"
                   required 
                 />
               </div>
@@ -341,7 +342,7 @@ function PatientManagement() {
                   type="text" 
                   value={targetPatient.phone}
                   onChange={(e) => setTargetPatient({...targetPatient, phone: e.target.value})}
-                  className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-blue-500 dark:text-white"
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500"
                   required 
                 />
               </div>
@@ -352,7 +353,7 @@ function PatientManagement() {
                   type="date" 
                   value={targetPatient.dob}
                   onChange={(e) => setTargetPatient({...targetPatient, dob: e.target.value})}
-                  className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-blue-500 dark:text-white"
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -361,7 +362,7 @@ function PatientManagement() {
                 <select 
                   value={targetPatient.gender}
                   onChange={(e) => setTargetPatient({...targetPatient, gender: e.target.value})}
-                  className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-blue-500 dark:text-white"
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500"
                 >
                   <option>Female</option>
                   <option>Male</option>
@@ -374,7 +375,7 @@ function PatientManagement() {
                    value={targetPatient.address}
                    onChange={(e) => setTargetPatient({...targetPatient, address: e.target.value})}
                    rows="3"
-                   className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm focus:outline-none focus:border-blue-500 dark:text-white"
+                   className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -382,7 +383,7 @@ function PatientManagement() {
                 <button 
                   type="button"
                   onClick={closePanel}
-                  className="flex-1 py-3 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-bold rounded-2xl hover:bg-neutral-200 transition-colors"
+                  className="flex-1 py-3 bg-neutral-100 text-neutral-700 font-bold rounded-2xl hover:bg-neutral-200 transition-colors"
                 >
                   Cancel
                 </button>

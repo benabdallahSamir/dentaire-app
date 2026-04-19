@@ -1,0 +1,19 @@
+// vite.config.mjs
+import { defineConfig } from "file:///C:/Users/ELITEBOOK/Desktop/dentaire%20app/node_modules/vite/dist/node/index.js";
+import react from "file:///C:/Users/ELITEBOOK/Desktop/dentaire%20app/node_modules/@vitejs/plugin-react/dist/index.js";
+import tailwindcss from "file:///C:/Users/ELITEBOOK/Desktop/dentaire%20app/node_modules/@tailwindcss/vite/dist/index.mjs";
+var vite_config_default = defineConfig({
+  plugins: [
+    react(),
+    tailwindcss()
+  ],
+  base: "./",
+  // Important for electron
+  server: {
+    port: 5173
+  }
+});
+export {
+  vite_config_default as default
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidml0ZS5jb25maWcubWpzIl0sCiAgInNvdXJjZXNDb250ZW50IjogWyJjb25zdCBfX3ZpdGVfaW5qZWN0ZWRfb3JpZ2luYWxfZGlybmFtZSA9IFwiQzpcXFxcVXNlcnNcXFxcRUxJVEVCT09LXFxcXERlc2t0b3BcXFxcZGVudGFpcmUgYXBwXCI7Y29uc3QgX192aXRlX2luamVjdGVkX29yaWdpbmFsX2ZpbGVuYW1lID0gXCJDOlxcXFxVc2Vyc1xcXFxFTElURUJPT0tcXFxcRGVza3RvcFxcXFxkZW50YWlyZSBhcHBcXFxcdml0ZS5jb25maWcubWpzXCI7Y29uc3QgX192aXRlX2luamVjdGVkX29yaWdpbmFsX2ltcG9ydF9tZXRhX3VybCA9IFwiZmlsZTovLy9DOi9Vc2Vycy9FTElURUJPT0svRGVza3RvcC9kZW50YWlyZSUyMGFwcC92aXRlLmNvbmZpZy5tanNcIjtpbXBvcnQgeyBkZWZpbmVDb25maWcgfSBmcm9tICd2aXRlJztcbmltcG9ydCByZWFjdCBmcm9tICdAdml0ZWpzL3BsdWdpbi1yZWFjdCc7XG5pbXBvcnQgdGFpbHdpbmRjc3MgZnJvbSAnQHRhaWx3aW5kY3NzL3ZpdGUnXG5cbmV4cG9ydCBkZWZhdWx0IGRlZmluZUNvbmZpZyh7XG4gIHBsdWdpbnM6IFtyZWFjdCgpLFxuICAgIHRhaWx3aW5kY3NzKCldLFxuICBiYXNlOiAnLi8nLCAvLyBJbXBvcnRhbnQgZm9yIGVsZWN0cm9uXG4gIHNlcnZlcjoge1xuICAgIHBvcnQ6IDUxNzMsICAgXG5cbiAgfSxcbn0pO1xuIl0sCiAgIm1hcHBpbmdzIjogIjtBQUFxVCxTQUFTLG9CQUFvQjtBQUNsVixPQUFPLFdBQVc7QUFDbEIsT0FBTyxpQkFBaUI7QUFFeEIsSUFBTyxzQkFBUSxhQUFhO0FBQUEsRUFDMUIsU0FBUztBQUFBLElBQUMsTUFBTTtBQUFBLElBQ2QsWUFBWTtBQUFBLEVBQUM7QUFBQSxFQUNmLE1BQU07QUFBQTtBQUFBLEVBQ04sUUFBUTtBQUFBLElBQ04sTUFBTTtBQUFBLEVBRVI7QUFDRixDQUFDOyIsCiAgIm5hbWVzIjogW10KfQo=

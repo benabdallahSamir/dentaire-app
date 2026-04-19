@@ -6,47 +6,28 @@ export const ThemeContext = createContext();
 export function ThemeProvider({ children }) {
   const { i18n } = useTranslation();
 
-  // Initialize theme from localStorage or default to system preference (or dark)
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'dark';
-  });
+  // Force Light theme and French language
+  const [theme] = useState('light');
+  const [language] = useState('fr');
 
-  // Initialize language from localStorage or default 'en'
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('i18nextLng') || 'en';
-  });
-
-  // Effect to apply theme class
+  // Effect to apply light theme class
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    root.classList.remove('dark');
+    root.classList.add('light');
+    localStorage.setItem('theme', 'light');
+  }, []);
 
-  // Effect to apply language and RTL/LTR layout
+  // Effect to apply French language and LTR layout
   useEffect(() => {
     const root = window.document.documentElement;
-    i18n.changeLanguage(language);
-    localStorage.setItem('i18nextLng', language);
-
-    if (language === 'ar') {
-      root.dir = 'rtl';
-    } else {
-      root.dir = 'ltr';
-    }
-  }, [language, i18n]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
-  const changeLanguage = (lang) => {
-    setLanguage(lang);
-  };
+    i18n.changeLanguage('fr');
+    localStorage.setItem('i18nextLng', 'fr');
+    root.dir = 'ltr';
+  }, [i18n]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, language, changeLanguage }}>
+    <ThemeContext.Provider value={{ theme, language }}>
       {children}
     </ThemeContext.Provider>
   );

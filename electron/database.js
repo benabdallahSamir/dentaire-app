@@ -39,6 +39,7 @@ function initDB() {
       patient_id INTEGER NOT NULL,
       name TEXT NOT NULL,
       total_price REAL,
+      note TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (patient_id) REFERENCES patients(id)
     );
@@ -56,6 +57,29 @@ function initDB() {
       FOREIGN KEY (package_id) REFERENCES packages(id)
     );
   `);
+
+  // Migration: Add note to packages if it doesn't exist
+  try {
+    db.exec("ALTER TABLE packages ADD COLUMN note TEXT;");
+    console.log('[System] Migration: Added "note" column to "packages" table.');
+  } catch (err) {
+    if (!err.message.includes("duplicate column name")) {
+       console.error('[System] Migration error (packages note):', err.message);
+    }
+  }
+
+  // Migration: Add clinical fields to sessions
+  try {
+    db.exec("ALTER TABLE sessions ADD COLUMN diagnostic TEXT;");
+    db.exec("ALTER TABLE sessions ADD COLUMN act TEXT;");
+    db.exec("ALTER TABLE sessions ADD COLUMN maladi TEXT;");
+    db.exec("ALTER TABLE sessions ADD COLUMN radio_path TEXT;");
+    console.log('[System] Migration: Added clinical columns to "sessions" table.');
+  } catch (err) {
+    if (!err.message.includes("duplicate column name")) {
+       console.error('[System] Migration error (sessions clinical fields):', err.message);
+    }
+  }
 
   db.exec("PRAGMA foreign_keys = ON;");
 
@@ -244,7 +268,7 @@ function getSessionsByPatient(patientId) {
   }
 }
 
-function createSession(patient_id, date, amount, note) {
+function createSession(patient_id, date, amount, note, package_id = null, diagnostic = '', act = '', maladi = '', radio_path = '') {
   try {
     const lastStmt = db.prepare('SELECT session_id FROM sessions ORDER BY id DESC LIMIT 1');
     const last = lastStmt.get();
@@ -254,8 +278,8 @@ function createSession(patient_id, date, amount, note) {
       nextId = `SS-${(num + 1).toString().padStart(3, '0')}`;
     }
 
-    const stmt = db.prepare('INSERT INTO sessions (session_id, patient_id, date, amount, note) VALUES (?, ?, ?, ?, ?)');
-    const result = stmt.run(nextId, patient_id, date, amount, note);
+    const stmt = db.prepare('INSERT INTO sessions (session_id, patient_id, date, amount, package_id, note, diagnostic, act, maladi, radio_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const result = stmt.run(nextId, patient_id, date, amount, package_id, note, diagnostic, act, maladi, radio_path);
     return { success: true, message: 'Session created successfully', id: result.lastInsertRowid };
   } catch (err) {
     console.error('Database Create Session Error:', err);
@@ -263,10 +287,10 @@ function createSession(patient_id, date, amount, note) {
   }
 }
 
-function updateSession(id, patient_id, date, amount, note) {
+function updateSession(id, patient_id, date, amount, note, package_id = null, diagnostic = '', act = '', maladi = '', radio_path = '') {
   try {
-    const stmt = db.prepare('UPDATE sessions SET patient_id = ?, date = ?, amount = ?, note = ? WHERE id = ?');
-    stmt.run(patient_id, date, amount, note, id);
+    const stmt = db.prepare('UPDATE sessions SET patient_id = ?, date = ?, amount = ?, note = ?, package_id = ?, diagnostic = ?, act = ?, maladi = ?, radio_path = ? WHERE id = ?');
+    stmt.run(patient_id, date, amount, note, package_id, diagnostic, act, maladi, radio_path, id);
     return { success: true, message: 'Session updated successfully' };
   } catch (err) {
     console.error('Database Update Session Error:', err);
@@ -281,6 +305,22 @@ function deleteSession(id) {
     return { success: true, message: 'Session deleted successfully' };
   } catch (err) {
     console.error('Database Delete Session Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function getSessionById(id) {
+  try {
+    const stmt = db.prepare(`
+      SELECT s.*, p.name as patient_name, p.patient_id as patient_display_id
+      FROM sessions s
+      JOIN patients p ON s.patient_id = p.id
+      WHERE s.id = ?
+    `);
+    const session = stmt.get(id);
+    return { success: true, session };
+  } catch (err) {
+    console.error('Database Get Session Error:', err);
     return { success: false, message: 'Internal Server Error' };
   }
 }
@@ -313,7 +353,7 @@ function getPackagesByPatient(patientId) {
   }
 }
 
-function createPackage(patient_id, name, total_price) {
+function createPackage(patient_id, name, total_price, note) {
   try {
     const lastStmt = db.prepare('SELECT package_id FROM packages ORDER BY id DESC LIMIT 1');
     const last = lastStmt.get();
@@ -323,11 +363,49 @@ function createPackage(patient_id, name, total_price) {
       nextId = `MS-${(num + 1).toString().padStart(3, '0')}`;
     }
 
-    const stmt = db.prepare('INSERT INTO packages (package_id, patient_id, name, total_price) VALUES (?, ?, ?, ?)');
-    const result = stmt.run(nextId, patient_id, name, total_price);
+    const stmt = db.prepare('INSERT INTO packages (package_id, patient_id, name, total_price, note) VALUES (?, ?, ?, ?, ?)');
+    const result = stmt.run(nextId, patient_id, name, total_price, note);
     return { success: true, message: 'Package created successfully', id: result.lastInsertRowid };
   } catch (err) {
     console.error('Database Create Package Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function updatePackage(id, name, total_price, note) {
+  try {
+    const stmt = db.prepare('UPDATE packages SET name = ?, total_price = ?, note = ? WHERE id = ?');
+    stmt.run(name, total_price, note, id);
+    return { success: true, message: 'Package updated successfully' };
+  } catch (err) {
+    console.error('Database Update Package Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function getPackageById(id) {
+  try {
+    const stmt = db.prepare(`
+      SELECT pk.*, p.name as patient_name
+      FROM packages pk
+      JOIN patients p ON pk.patient_id = p.id
+      WHERE pk.id = ?
+    `);
+    const pkg = stmt.get(id);
+    return { success: true, package: pkg };
+  } catch (err) {
+    console.error('Database Get Package Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
+function getSessionsByPackage(packageId) {
+  try {
+    const stmt = db.prepare('SELECT * FROM sessions WHERE package_id = ? ORDER BY date ASC');
+    const sessions = stmt.all(packageId);
+    return { success: true, sessions };
+  } catch (err) {
+    console.error('Database Get Package Sessions Error:', err);
     return { success: false, message: 'Internal Server Error' };
   }
 }
@@ -343,6 +421,17 @@ function deletePackage(id) {
   }
 }
 
+function getPatientById(id) {
+  try {
+    const stmt = db.prepare('SELECT * FROM patients WHERE id = ?');
+    const patient = stmt.get(id);
+    return { success: true, patient };
+  } catch (err) {
+    console.error('Database Get Patient By ID Error:', err);
+    return { success: false, message: 'Internal Server Error' };
+  }
+}
+
 module.exports = {
   initDB,
   verifyUser,
@@ -351,6 +440,7 @@ module.exports = {
   deleteUser,
   updateUser,
   getPatients,
+  getPatientById,
   createPatient,
   updatePatient,
   deletePatient,
@@ -359,9 +449,13 @@ module.exports = {
   createSession,
   updateSession,
   deleteSession,
+  getSessionById,
   getPackages,
   getPackagesByPatient,
+  getSessionsByPackage,
+  getPackageById,
   createPackage,
+  updatePackage,
   deletePackage,
   ping: () => true
 };

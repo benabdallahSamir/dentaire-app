@@ -3,53 +3,6 @@ import { initReactI18next } from 'react-i18next';
 
 // Translations
 const resources = {
-  en: {
-    translation: {
-      auth: {
-        title: "Clinic Management",
-        subtitle: "Sign in to your account",
-        username: "Username",
-        password: "Password",
-        signIn: "Sign In",
-        authenticating: "Authenticating...",
-        errorInternal: "An error occurred during login. Ensure the backend is running.",
-      },
-      dashboard: {
-        title: "Clinic Dashboard",
-        loggedInAs: "Logged in as",
-        logout: "Logout",
-        welcomeTitle: "Welcome back!",
-        welcomeSubtitle: "Your professional clinic management dashboard is ready.",
-      },
-      sidebar: {
-        dashboard: "Dashboard",
-        patient: "Patients",
-        rendezVous: "Rendez Vous",
-        session: "Sessions",
-        users: "Users",
-        setting: "Settings",
-        logout: "Logout",
-      },
-      sessions: {
-        title: "Session Records",
-        single: {
-          add: "Add Session"
-        },
-        table: {
-          id: "ID",
-          patient: "PATIENT",
-          date: "DATE",
-          price: "Price",
-          note: "NOTE",
-          actions: "ACTIONS"
-        }
-      },
-      theme: {
-        dark: "Dark",
-        light: "Light"
-      }
-    }
-  },
   fr: {
     translation: {
       auth: {
@@ -73,6 +26,7 @@ const resources = {
         patient: "Patients",
         rendezVous: "Rendez-vous",
         session: "Sessions",
+        multiple_sessions: "Sessions Multiples",
         users: "Utilisateurs",
         setting: "Paramètres",
         logout: "Déconnexion",
@@ -89,73 +43,41 @@ const resources = {
           price: "Prix",
           note: "NOTE",
           actions: "ACTIONS"
-        }
-      },
-      theme: {
-        dark: "Sombre",
-        light: "Clair"
-      }
-    }
-  },
-  ar: {
-    translation: {
-      auth: {
-        title: "إدارة العيادة",
-        subtitle: "سجل الدخول إلى حسابك",
-        username: "اسم المستخدم",
-        password: "كلمة المرور",
-        signIn: "تسجيل الدخول",
-        authenticating: "جاري المصادقة...",
-        errorInternal: "حدث خطأ أثناء تسجيل الدخول. تأكد من تشغيل الخادم.",
-      },
-      dashboard: {
-        title: "لوحة تحكم العيادة",
-        loggedInAs: "تم تسجيل الدخول كـ",
-        logout: "تسجيل الخروج",
-        welcomeTitle: "مرحباً بعودتك!",
-        welcomeSubtitle: "لوحة تحكم إدارة العيادة الاحترافية الخاصة بك جاهزة.",
-      },
-      sidebar: {
-        dashboard: "لوحة التحكم",
-        patient: "المرضى",
-        rendezVous: "المواعيد",
-        session: "الجلسات",
-        users: "المستخدمين",
-        setting: "الإعدادات",
-        logout: "تسجيل الخروج",
-      },
-      sessions: {
-        title: "سجل الجلسات",
-        single: {
-          add: "إضافة جلسة"
         },
-        table: {
-          id: "ID",
-          patient: "المريض",
-          date: "التاريخ",
-          price: "السعر",
-          note: "ملاحظة",
-          actions: "الإجراءات"
+        multiple: {
+          title: "Sessions Multiples",
+          add: "Nouveau Plan de Traitement",
+          table: {
+            id: "ID",
+            patient: "PATIENT",
+            plan: "NOM DU PLAN",
+            price: "PRIX TOTAL",
+            paid: "PAYÉ",
+            remaining: "RESTE",
+            actions: "ACTIONS"
+          },
+          detail: {
+            summary: "Résumé du Plan",
+            payments: "Historique des Paiements",
+            add_payment: "Ajouter un Paiement",
+            total_price: "Coût Total du Plan",
+            paid_amount: "Total Payé",
+            balance: "Solde Restant"
+          }
         }
-      },
-      theme: {
-        dark: "داكن",
-        light: "فاتح"
       }
     }
   }
 };
 
-const savedLanguage = localStorage.getItem('i18nextLng') || 'en';
-
 i18n
-  .use(initReactI18next) // passes i18n down to react-i18next
+  .use(initReactI18next)
   .init({
     resources,
-    lng: savedLanguage,
-    fallbackLng: "en",
+    lng: "fr",
+    fallbackLng: "fr",
     interpolation: {
-      escapeValue: false // react already safes from xss
+      escapeValue: false
     }
   });
 

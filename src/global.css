@@ -1,13 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   --swal-bg: #ffffff;
   --swal-color: #111827;
-}
-
-.dark {
-  --swal-bg: #171717; /* neutral-900 */
-  --swal-color: #f9fafb;
 }
