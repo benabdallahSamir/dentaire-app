@@ -55,6 +55,12 @@ function PatientRecord() {
   // Local Modal States
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewData, setViewData] = useState(null);
+  const [isSessionEditMode, setIsSessionEditMode] = useState(false);
+  const [targetSession, setTargetSession] = useState(null);
+  const [isPackageEditMode, setIsPackageEditMode] = useState(false);
+  const [targetPackageToEdit, setTargetPackageToEdit] = useState(null);
 
   useEffect(() => {
     fetchPatientData();
@@ -87,27 +93,67 @@ function PatientRecord() {
     setSelectedPackage(pkg);
   };
 
+  const handleOpenDetail = (session) => {
+    setViewData({ session, patient });
+    setIsViewModalOpen(true);
+  };
+
   const handleSaveSession = async (formData) => {
     try {
-      const result = await window.api.createSession(
-        formData.patient_id, formData.date, formData.amount, formData.note,
-        null, formData.diagnostic, formData.act, formData.maladi, formData.radio_path
-      );
+      let result;
+      if (isSessionEditMode && targetSession) {
+        result = await window.api.updateSession(
+          targetSession.id, formData.patient_id, formData.date, formData.amount, formData.note,
+          targetSession.package_id, formData.diagnostic, formData.act, formData.maladi, formData.radio_path
+        );
+      } else {
+        result = await window.api.createSession(
+          formData.patient_id, formData.date, formData.amount, formData.note,
+          null, formData.diagnostic, formData.act, formData.maladi, formData.radio_path
+        );
+      }
+
       if (result.success) {
-        Swal.fire({ icon: 'success', title: 'Session Enregistrée', text: result.message, timer: 2000, showConfirmButton: false });
+        Swal.fire({ icon: 'success', title: isSessionEditMode ? 'Session Mise à jour' : 'Session Enregistrée', text: result.message, timer: 2000, showConfirmButton: false });
         setIsSessionModalOpen(false);
+        setTargetSession(null);
+        setIsSessionEditMode(false);
         fetchPatientData();
+        // If we are editing a sub-session within a package, refresh those as well
+        if (selectedPackage) {
+          fetchPackageDetail(selectedPackage);
+        }
       }
     } catch (err) { console.error("Save failed:", err); }
   };
 
   const handleSavePackage = async (formData) => {
     try {
-      const result = await window.api.createPackage(formData.patient_id, formData.name, formData.total_price, formData.diagnostic, formData.acr);
+      let result;
+      if (isPackageEditMode && targetPackageToEdit) {
+        result = await window.api.updatePackage(
+          targetPackageToEdit.id, formData.patient_id, formData.name, formData.total_price, formData.diagnostic, formData.acr, formData.radio_path
+        );
+      } else {
+        result = await window.api.createPackage(
+          formData.patient_id, formData.name, formData.total_price, formData.diagnostic, formData.acr, formData.radio_path
+        );
+      }
+
       if (result.success) {
-        Swal.fire({ icon: 'success', title: 'Plan Établi', text: result.message, timer: 2000, showConfirmButton: false });
+        Swal.fire({ icon: 'success', title: isPackageEditMode ? 'Plan Mis à jour' : 'Plan Établi', text: result.message, timer: 2000, showConfirmButton: false });
         setIsPackageModalOpen(false);
+        setTargetPackageToEdit(null);
+        setIsPackageEditMode(false);
         fetchPatientData();
+        // If we were viewing the package, update the view state
+        if (selectedPackage && (isPackageEditMode || selectedPackage.id === result.id)) {
+          const updatedPackages = await window.api.getPackagesByPatient(id);
+          if (updatedPackages.success) {
+            const updated = updatedPackages.packages.find(p => p.id === (isPackageEditMode ? targetPackageToEdit.id : result.id));
+            if (updated) setSelectedPackage(updated);
+          }
+        }
       }
     } catch (err) { console.error("Save failed:", err); }
   };
@@ -280,7 +326,7 @@ function PatientRecord() {
                    <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{sessions.length}</span>
                  </h3>
                  <button 
-                   onClick={() => setIsSessionModalOpen(true)}
+                   onClick={() => { setIsSessionEditMode(false); setTargetSession(null); setIsSessionModalOpen(true); }}
                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
                  >
                    <Plus size={14} strokeWidth={3} />
@@ -301,7 +347,7 @@ function PatientRecord() {
                      {sessions.length === 0 ? (
                        <tr><td colSpan="4" className="py-20 text-center text-neutral-300 font-bold italic uppercase text-xs">Aucune session enregistrée.</td></tr>
                      ) : sessions.map(s => (
-                       <tr key={s.id} onClick={() => navigate(`/session/${s.id}`)} className="hover:bg-neutral-50/50 transition-all text-sm cursor-pointer group">
+                       <tr key={s.id} onClick={() => handleOpenDetail(s)} className="hover:bg-neutral-50/50 transition-all text-sm cursor-pointer group">
                          <td className="px-8 py-5 font-mono text-neutral-400 text-xs">{s.session_id}</td>
                          <td className="px-8 py-5 font-bold text-neutral-900">{s.date}</td>
                          <td className="px-8 py-5"><span className="font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">{Number(s.amount).toLocaleString()} DA</span></td>
@@ -327,7 +373,7 @@ function PatientRecord() {
                    <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{packages.length}</span>
                  </h3>
                  <button 
-                   onClick={() => setIsPackageModalOpen(true)}
+                   onClick={() => { setIsPackageEditMode(false); setTargetPackageToEdit(null); setIsPackageModalOpen(true); }}
                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
                  >
                    <Plus size={14} strokeWidth={3} />
@@ -382,9 +428,21 @@ function PatientRecord() {
                       <ChevronLeft size={14} strokeWidth={3} /> Retour aux Plans
                     </button>
                     <div className="w-px h-6 bg-neutral-200"></div>
-                    <div>
-                      <span className="text-[10px] font-mono text-neutral-400">{selectedPackage.package_id}</span>
-                      <h3 className="font-black text-neutral-900 capitalize">{selectedPackage.name}</h3>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <span className="text-[10px] font-mono text-neutral-400">{selectedPackage.package_id}</span>
+                        <h3 className="font-black text-neutral-900 capitalize">{selectedPackage.name}</h3>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setIsPackageEditMode(true);
+                          setTargetPackageToEdit(selectedPackage);
+                          setIsPackageModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all active:scale-95 border border-blue-100"
+                      >
+                        <Edit size={14} strokeWidth={3} /> Modifier le Plan
+                      </button>
                     </div>
                   </div>
                   <button
@@ -435,20 +493,20 @@ function PatientRecord() {
                       {subSessions.length === 0 ? (
                         <tr><td colSpan="7" className="py-20 text-center text-neutral-300 font-bold italic uppercase text-xs">Aucune sous-session enregistrée.</td></tr>
                       ) : subSessions.map(s => (
-                        <tr key={s.id} className="hover:bg-blue-50/30 transition-all text-sm group cursor-pointer">
-                          <td className="px-8 py-5 font-mono text-neutral-400 text-xs" onClick={() => navigate(`/session/${s.id}`)}>{s.session_id}</td>
-                          <td className="px-8 py-5 font-bold text-neutral-900" onClick={() => navigate(`/session/${s.id}`)}>{s.date}</td>
-                          <td className="px-8 py-5" onClick={() => navigate(`/session/${s.id}`)}><span className="font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">{Number(s.amount).toLocaleString()} DA</span></td>
-                          <td className="px-8 py-5 max-w-[150px]" onClick={() => navigate(`/session/${s.id}`)}><span className="text-neutral-600 text-xs line-clamp-2">{s.diagnostic || '---'}</span></td>
-                          <td className="px-8 py-5 max-w-[150px]" onClick={() => navigate(`/session/${s.id}`)}><span className="text-neutral-600 text-xs line-clamp-2">{s.act || '---'}</span></td>
-                          <td className="px-8 py-5" onClick={() => navigate(`/session/${s.id}`)}><span className="text-neutral-500 italic text-xs line-clamp-1">{s.note || '---'}</span></td>
+                        <tr key={s.id} onClick={() => handleOpenDetail(s)} className="hover:bg-blue-50/30 transition-all text-sm group cursor-pointer">
+                          <td className="px-8 py-5 font-mono text-neutral-400 text-xs">{s.session_id}</td>
+                          <td className="px-8 py-5 font-bold text-neutral-900">{s.date}</td>
+                          <td className="px-8 py-5"><span className="font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">{Number(s.amount).toLocaleString()} DA</span></td>
+                          <td className="px-8 py-5 max-w-[150px]"><span className="text-neutral-600 text-xs line-clamp-2">{s.diagnostic || '---'}</span></td>
+                          <td className="px-8 py-5 max-w-[150px]"><span className="text-neutral-600 text-xs line-clamp-2">{s.act || '---'}</span></td>
+                          <td className="px-8 py-5"><span className="text-neutral-500 italic text-xs line-clamp-1">{s.note || '---'}</span></td>
                           <td className="px-8 py-5 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
                                 <button onClick={(e) => { e.stopPropagation(); handleEditSub(s); }} className="p-2 text-neutral-400 hover:text-blue-500 hover:bg-white rounded-xl border border-transparent hover:border-neutral-200 transition-all"><Edit size={14} /></button>
                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteSub(s); }} className="p-2 text-neutral-400 hover:text-red-500 hover:bg-white rounded-xl border border-transparent hover:border-neutral-200 transition-all"><Trash2 size={14} /></button>
                               </div>
-                              <div onClick={() => navigate(`/session/${s.id}`)} className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all ml-1">
+                              <div onClick={() => handleOpenDetail(s)} className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all ml-1">
                                 <ChevronRight size={16} />
                               </div>
                             </div>
@@ -576,20 +634,105 @@ function PatientRecord() {
         {/* Session + Package creation modals */}
         <SessionModal 
           isOpen={isSessionModalOpen}
-          onClose={() => setIsSessionModalOpen(false)}
+          onClose={() => { setIsSessionModalOpen(false); setTargetSession(null); setIsSessionEditMode(false); }}
           onSave={handleSaveSession}
+          targetSession={targetSession}
+          isEditMode={isSessionEditMode}
           defaultPatientId={patient.id}
           lockedPatient={true}
         />
         <PackageModal 
           isOpen={isPackageModalOpen}
-          onClose={() => setIsPackageModalOpen(false)}
+          onClose={() => { setIsPackageModalOpen(false); setTargetPackageToEdit(null); setIsPackageEditMode(false); }}
           onSave={handleSavePackage}
+          targetPackage={targetPackageToEdit}
+          isEditMode={isPackageEditMode}
           defaultPatientId={patient.id}
           lockedPatient={true}
         />
 
       </div>
+      {/* View Details Modal */}
+      {isViewModalOpen && viewData && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex justify-center items-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-neutral-100 flex justify-between items-center bg-neutral-50">
+              <h3 className="font-black text-lg text-neutral-800 uppercase tracking-tight">Détails de la Session</h3>
+              <button onClick={() => setIsViewModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 transition-colors">✕</button>
+            </div>
+            <div className="p-8 overflow-y-auto flex-1 bg-white">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
+                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">Date</p>
+                    <p className="text-sm font-bold text-neutral-900">{viewData.session.date}</p>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Montant</p>
+                    <p className="text-sm font-black text-blue-600">{Number(viewData.session.amount).toLocaleString()} DA</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">Diagnostic</p>
+                    <div className="bg-white border border-neutral-100 p-4 rounded-2xl text-sm font-medium text-neutral-700 min-h-[50px]">
+                      {viewData.session.diagnostic || '---'}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">Acte effectué</p>
+                    <div className="bg-white border border-neutral-100 p-4 rounded-2xl text-sm font-medium text-neutral-700 min-h-[50px]">
+                      {viewData.session.act || '---'}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">Maladie / Antécédents</p>
+                    <div className="bg-white border border-neutral-100 p-4 rounded-2xl text-sm font-medium text-neutral-700 min-h-[50px]">
+                      {viewData.session.maladi || '---'}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">Note / Observations</p>
+                    <div className="bg-white border border-neutral-100 p-4 rounded-2xl text-sm font-medium text-neutral-700 italic min-h-[50px]">
+                      {viewData.session.note || '---'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-neutral-100">
+                  {viewData.session.radio_path ? (
+                    <button 
+                      onClick={() => window.api.openRadioFile(viewData.session.radio_path)}
+                      className="w-full py-4 bg-neutral-900 text-white font-black rounded-2xl shadow-xl hover:bg-neutral-800 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                    >
+                      <ImageIcon size={16} /> Ouvrir Radiographie
+                    </button>
+                  ) : (
+                    <div className="w-full py-4 bg-neutral-50 text-neutral-400 font-bold rounded-2xl border border-dashed border-neutral-200 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest">
+                      <ImageIcon size={14} className="opacity-50" /> Pas de radiographie attachée
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-neutral-100 bg-neutral-50 flex justify-end gap-3">
+              <button 
+                onClick={() => {
+                  setIsViewModalOpen(false);
+                  setIsSessionEditMode(true);
+                  setTargetSession(viewData.session);
+                  setIsSessionModalOpen(true);
+                }} 
+                className="px-8 py-3 bg-blue-50 text-blue-600 font-black rounded-2xl shadow-sm hover:bg-blue-100 transition-all text-[10px] uppercase tracking-widest flex items-center gap-2 border border-blue-100"
+              >
+                <Edit size={14} strokeWidth={3} /> Modifier la Session
+              </button>
+              <button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-neutral-200 text-neutral-700 font-black rounded-2xl shadow-sm hover:bg-neutral-50 transition-all text-xs uppercase tracking-widest">Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

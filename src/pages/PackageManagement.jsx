@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { Search, User, Phone, Check } from 'lucide-react';
+import { Search, User, Phone, Check, Edit, Trash2, ChevronRight, Image as ImageIcon, Layers } from 'lucide-react';
 
 function PackageManagement() {
   const { t } = useTranslation();
@@ -15,10 +15,15 @@ function PackageManagement() {
   // Panel States
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // View Details State
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewData, setViewData] = useState(null);
+  const [isSessionDetailOpen, setIsSessionDetailOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [isSessionEditMode, setIsSessionEditMode] = useState(false);
+  const [targetSessionToEdit, setTargetSessionToEdit] = useState(null);
   const [isSubPaymentOpen, setIsSubPaymentOpen] = useState(false);
   const [subPaymentData, setSubPaymentData] = useState({
     amount: '', note: '', date: new Date().toISOString().split('T')[0],
@@ -49,7 +54,8 @@ function PackageManagement() {
     name: '',
     total_price: '',
     diagnostic: '',
-    acr: ''
+    acr: '',
+    radio_path: ''
   });
 
   const [errorMsg, setErrorMsg] = useState('');
@@ -97,6 +103,23 @@ function PackageManagement() {
     setIsPatientDropdownOpen(false);
   };
 
+  const handleRadioSelect = async () => {
+    const filePath = await window.api.selectRadioFile();
+    if (filePath) {
+      setTargetPackage({ ...targetPackage, radio_path: filePath });
+    }
+  };
+
+  const handleRadioDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const filePath = file.path; // Electron provides file.path
+      setTargetPackage({ ...targetPackage, radio_path: filePath });
+    }
+  };
+
   const handleSavePackage = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -115,7 +138,8 @@ function PackageManagement() {
           targetPackage.name,
           targetPackage.total_price,
           targetPackage.diagnostic,
-          targetPackage.acr
+          targetPackage.acr,
+          targetPackage.radio_path
         );
       } else {
         result = await window.api.createPackage(
@@ -123,7 +147,8 @@ function PackageManagement() {
           targetPackage.name,
           targetPackage.total_price,
           targetPackage.diagnostic,
-          targetPackage.acr
+          targetPackage.acr,
+          targetPackage.radio_path
         );
       }
 
@@ -220,6 +245,37 @@ function PackageManagement() {
     }
   };
 
+  const handleDeleteSession = async (id) => {
+    const { isConfirmed } = await Swal.fire({
+      title: 'Supprimer la session?',
+      text: "Voulez-vous vraiment supprimer cette session?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler'
+    });
+
+    if (isConfirmed) {
+      try {
+        const result = await window.api.deleteSession(id);
+        if (result.success) {
+          Swal.fire({ icon: 'success', title: 'Supprimée', text: 'La session a été supprimée.', timer: 1500, showConfirmButton: false });
+          // Refresh subSessions in modal
+          const res = await window.api.getSessionsByPackage(viewData.pkg.id);
+          setViewData(prev => ({ ...prev, subSessions: res.success ? res.sessions : [] }));
+          fetchData();
+        }
+      } catch (err) { console.error("Delete failed:", err); }
+    }
+  };
+
+  const handleOpenSessionDetail = (session) => {
+    setSelectedSession(session);
+    setIsSessionDetailOpen(true);
+  };
+
   const openAddPanel = () => {
     setIsEditMode(false);
     setTargetPackage({
@@ -228,7 +284,8 @@ function PackageManagement() {
       name: '',
       total_price: '',
       diagnostic: '',
-      acr: ''
+      acr: '',
+      radio_path: ''
     });
     setPatientSearch('');
     setIsQuickAddPatientOpen(false);
@@ -243,7 +300,8 @@ function PackageManagement() {
       name: pkg.name || '',
       total_price: pkg.total_price || '',
       diagnostic: pkg.diagnostic || '',
-      acr: pkg.acr || ''
+      acr: pkg.acr || '',
+      radio_path: pkg.radio_path || ''
     });
     const p = patients.find(p => p.id === pkg.patient_id);
     setPatientSearch(p ? p.name : '');
@@ -267,14 +325,26 @@ function PackageManagement() {
     e.preventDefault();
     if (!subPaymentData.amount) return;
     try {
-      const result = await window.api.createSession(
-        viewData.pkg.patient_id, subPaymentData.date, subPaymentData.amount,
-        subPaymentData.note, viewData.pkg.id,
-        subPaymentData.diagnostic, subPaymentData.act, subPaymentData.maladi, subPaymentData.radio_path
-      );
+      let result;
+      if (isSessionEditMode && targetSessionToEdit) {
+        result = await window.api.updateSession(
+          targetSessionToEdit.id, viewData.pkg.patient_id, subPaymentData.date,
+          subPaymentData.amount, subPaymentData.note, viewData.pkg.id,
+          subPaymentData.diagnostic, subPaymentData.act, subPaymentData.maladi, subPaymentData.radio_path
+        );
+      } else {
+        result = await window.api.createSession(
+          viewData.pkg.patient_id, subPaymentData.date, subPaymentData.amount,
+          subPaymentData.note, viewData.pkg.id,
+          subPaymentData.diagnostic, subPaymentData.act, subPaymentData.maladi, subPaymentData.radio_path
+        );
+      }
+
       if (result.success) {
-        Swal.fire({ icon: 'success', title: 'Sous-session ajoutée', timer: 1500, showConfirmButton: false, background: 'var(--swal-bg)', color: 'var(--swal-color)' });
+        Swal.fire({ icon: 'success', title: isSessionEditMode ? 'Session Mise à jour' : 'Sous-session ajoutée', timer: 1500, showConfirmButton: false, background: 'var(--swal-bg)', color: 'var(--swal-color)' });
         setIsSubPaymentOpen(false);
+        setIsSessionEditMode(false);
+        setTargetSessionToEdit(null);
         setSubPaymentData({ amount: '', note: '', date: new Date().toISOString().split('T')[0], diagnostic: '', act: '', maladi: '', radio_path: '' });
         // Refresh subSessions in modal
         const res = await window.api.getSessionsByPackage(viewData.pkg.id);
@@ -548,6 +618,22 @@ function PackageManagement() {
                        className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-neutral-400 uppercase mb-2 ml-1">Radiographie</label>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={handleRadioSelect} onDragOver={e => { e.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={handleRadioDrop}
+                        className={`flex-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed py-6 rounded-2xl transition-all ${isDragging ? 'border-blue-500 bg-blue-50/50' : 'border-neutral-200 hover:border-blue-300 hover:bg-neutral-50'}`}
+                      >
+                        <span className="text-[10px] font-bold text-neutral-500">{targetPackage.radio_path ? 'Image sélectionnée (cliquez pour changer)' : 'Cliquer ou glisser une image'}</span>
+                      </button>
+                      {targetPackage.radio_path && (
+                        <button type="button" onClick={() => setTargetPackage({...targetPackage, radio_path: ''})} className="p-3 bg-red-50 text-red-400 rounded-xl hover:bg-red-100">
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </form>
               ) : (
                 <form id="quickAddPatientForm" onSubmit={handleQuickAddPatient} className="space-y-6 bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
@@ -666,6 +752,20 @@ function PackageManagement() {
                         <span className="text-neutral-400 font-bold block mb-1 text-xs uppercase tracking-wider">Diagnostic</span>
                         <p className="font-medium text-neutral-700 bg-white p-3 rounded-xl border border-emerald-50 min-h-[60px]">{viewData.pkg.diagnostic || 'Aucun diagnostic.'}</p>
                       </div>
+                      <div className="pt-2 border-t border-emerald-100/50 mt-2">
+                        {viewData.pkg.radio_path ? (
+                          <button 
+                            onClick={() => window.api.openRadioFile(viewData.pkg.radio_path)}
+                            className="w-full py-3 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+                          >
+                            🖼️ Ouvrir Radiographie
+                          </button>
+                        ) : (
+                          <div className="w-full py-3 bg-neutral-50 text-neutral-400 font-medium rounded-xl border border-dashed border-neutral-200 flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider">
+                            🖼️ Pas de radiographie
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -704,6 +804,30 @@ function PackageManagement() {
                           <input type="text" value={subPaymentData.act} onChange={e => setSubPaymentData({...subPaymentData, act: e.target.value})} className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
                         </div>
                       </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1 ml-1">Maladie</label>
+                          <input type="text" value={subPaymentData.maladi} onChange={e => setSubPaymentData({...subPaymentData, maladi: e.target.value})} className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1 ml-1">Observations</label>
+                          <input type="text" value={subPaymentData.note} onChange={e => setSubPaymentData({...subPaymentData, note: e.target.value})} className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-blue-500" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1 ml-1">Radiographie</label>
+                        <div className="flex items-center gap-2">
+                          <button type="button" onClick={async () => {
+                            const result = await window.api.selectRadioFile();
+                            if (result.success) setSubPaymentData({...subPaymentData, radio_path: result.filePath});
+                          }} className="flex-1 py-2 bg-white border border-neutral-200 rounded-xl text-[10px] font-bold text-neutral-500 hover:bg-neutral-50 transition-colors">
+                            {subPaymentData.radio_path ? 'Image sélectionnée' : 'Sélectionner Radiographie'}
+                          </button>
+                          {subPaymentData.radio_path && (
+                            <button type="button" onClick={() => setSubPaymentData({...subPaymentData, radio_path: ''})} className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100">✕</button>
+                          )}
+                        </div>
+                      </div>
                       <button type="submit" className="w-full py-2 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-colors text-sm">Enregistrer la Session</button>
                     </form>
                   )}
@@ -722,11 +846,16 @@ function PackageManagement() {
                         {viewData.subSessions.length === 0 ? (
                           <tr><td colSpan="4" className="px-4 py-8 text-center text-neutral-400 italic">Aucune session pour ce plan.</td></tr>
                         ) : viewData.subSessions.map(s => (
-                          <tr key={s.id} className="hover:bg-neutral-50">
+                          <tr key={s.id} onClick={() => handleOpenSessionDetail(s)} className="hover:bg-neutral-50 cursor-pointer group transition-all">
                             <td className="px-4 py-3">{new Date(s.date).toLocaleDateString()}</td>
                             <td className="px-4 py-3 font-bold text-emerald-600">{s.amount} DA</td>
                             <td className="px-4 py-3 text-neutral-600">{s.diagnostic || '-'}</td>
-                            <td className="px-4 py-3 text-neutral-600">{s.act || '-'}</td>
+                            <td className="px-4 py-3 text-neutral-600">
+                              <div className="flex items-center justify-between">
+                                <span>{s.act || '-'}</span>
+                                <ChevronRight size={14} className="text-neutral-300 group-hover:text-blue-500 transition-colors" />
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -738,14 +867,121 @@ function PackageManagement() {
               <div className="p-6 border-t border-neutral-100 bg-neutral-50 flex justify-end gap-3">
                 <button 
                   onClick={() => {
+                    const pkgId = viewData.pkg.id;
+                    setIsViewModalOpen(false);
+                    handleDelete(pkgId);
+                  }} 
+                  className="px-8 py-3 bg-red-50 text-red-600 font-black rounded-2xl shadow-sm hover:bg-red-100 transition-all text-[10px] uppercase tracking-widest flex items-center gap-2 border border-red-100"
+                >
+                  🗑️ Supprimer le Plan
+                </button>
+                <button 
+                  onClick={() => {
                     setIsViewModalOpen(false);
                     openEditPanel(viewData.pkg);
                   }} 
-                  className="px-8 py-2.5 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition-all active:scale-95 flex items-center gap-2"
+                  className="px-8 py-3 bg-blue-50 text-blue-600 font-black rounded-2xl shadow-sm hover:bg-blue-100 transition-all text-[10px] uppercase tracking-widest flex items-center gap-2 border border-blue-100"
                 >
-                  📝 Edit Package
+                  📝 Modifier le Plan
                 </button>
-                <button onClick={() => setIsViewModalOpen(false)} className="px-8 py-2.5 bg-neutral-800 text-white font-bold rounded-xl shadow-lg hover:bg-neutral-900 transition-all active:scale-95">Close</button>
+                <button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-neutral-200 text-neutral-700 font-black rounded-2xl shadow-sm hover:bg-neutral-50 transition-all text-[10px] uppercase tracking-widest">Fermer</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Session Detail Modal */}
+        {isSessionDetailOpen && selectedSession && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex justify-center items-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-6 border-b border-neutral-100 flex justify-between items-center bg-neutral-50">
+                <h3 className="font-black text-lg text-neutral-800 uppercase tracking-tight">Détails de la Session</h3>
+                <button onClick={() => setIsSessionDetailOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 transition-colors">✕</button>
+              </div>
+              <div className="p-8 overflow-y-auto flex-1 bg-white">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
+                      <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">Date</p>
+                      <p className="text-sm font-bold text-neutral-900">{selectedSession.date}</p>
+                    </div>
+                    <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Montant</p>
+                      <p className="text-sm font-black text-emerald-600">{Number(selectedSession.amount).toLocaleString()} DA</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">Diagnostic</p>
+                      <div className="bg-white border border-neutral-100 p-4 rounded-2xl text-sm font-medium text-neutral-700 min-h-[50px]">
+                        {selectedSession.diagnostic || '---'}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">Acte effectué</p>
+                      <div className="bg-white border border-neutral-100 p-4 rounded-2xl text-sm font-medium text-neutral-700 min-h-[50px]">
+                        {selectedSession.act || '---'}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">Maladie / Antécédents</p>
+                      <div className="bg-white border border-neutral-100 p-4 rounded-2xl text-sm font-medium text-neutral-700 min-h-[50px]">
+                        {selectedSession.maladi || '---'}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">Note / Observations</p>
+                      <div className="bg-white border border-neutral-100 p-4 rounded-2xl text-sm font-medium text-neutral-700 italic min-h-[50px]">
+                        {selectedSession.note || '---'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-neutral-100">
+                    {selectedSession.radio_path ? (
+                      <button 
+                        onClick={() => window.api.openRadioFile(selectedSession.radio_path)}
+                        className="w-full py-4 bg-neutral-900 text-white font-black rounded-2xl shadow-xl hover:bg-neutral-800 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                      >
+                        <ImageIcon size={16} /> Ouvrir Radiographie
+                      </button>
+                    ) : (
+                      <div className="w-full py-4 bg-neutral-50 text-neutral-400 font-bold rounded-2xl border border-dashed border-neutral-200 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest">
+                        <ImageIcon size={14} className="opacity-50" /> Pas de radiographie attachée
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 border-t border-neutral-100 bg-neutral-50 flex justify-end gap-3">
+                <button 
+                  onClick={() => handleDeleteSession(selectedSession.id)} 
+                  className="px-8 py-3 bg-red-50 text-red-600 font-black rounded-2xl shadow-sm hover:bg-red-100 transition-all text-[10px] uppercase tracking-widest flex items-center gap-2 border border-red-100"
+                >
+                  <Trash2 size={14} /> Supprimer
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsSessionDetailOpen(false);
+                    setIsSessionEditMode(true);
+                    setTargetSessionToEdit(selectedSession);
+                    setSubPaymentData({
+                      date: selectedSession.date,
+                      amount: selectedSession.amount,
+                      note: selectedSession.note || '',
+                      diagnostic: selectedSession.diagnostic || '',
+                      act: selectedSession.act || '',
+                      maladi: selectedSession.maladi || '',
+                      radio_path: selectedSession.radio_path || ''
+                    });
+                    setIsSubPaymentOpen(true);
+                  }} 
+                  className="px-8 py-3 bg-blue-50 text-blue-600 font-black rounded-2xl shadow-sm hover:bg-blue-100 transition-all text-[10px] uppercase tracking-widest flex items-center gap-2 border border-blue-100"
+                >
+                  <Edit size={14} strokeWidth={3} /> Modifier
+                </button>
+                <button onClick={() => setIsSessionDetailOpen(false)} className="px-8 py-3 bg-white border border-neutral-200 text-neutral-700 font-black rounded-2xl shadow-sm hover:bg-neutral-50 transition-all text-[10px] uppercase tracking-widest">Fermer</button>
               </div>
             </div>
           </div>

@@ -42,7 +42,12 @@ function SessionModal({ isOpen, onClose, onSave, targetSession, isEditMode, defa
           radio_path: targetSession.radio_path || ''
         });
         // Pre-fill search if it's edit mode
-        setPatientSearch(targetSession.patient_name || '');
+        if (targetSession.patient_name) {
+          setPatientSearch(targetSession.patient_name);
+        } else {
+          const patient = patients.find(p => p.id === targetSession.patient_id);
+          setPatientSearch(patient ? patient.name : '');
+        }
       } else if (defaultPatientId) {
         // Pre-fill if a default patient ID is passed
         const patient = patients.find(p => String(p.id) === String(defaultPatientId));

@@ -62,9 +62,10 @@ function initDB() {
   try {
     db.exec("ALTER TABLE packages ADD COLUMN diagnostic TEXT;");
     db.exec("ALTER TABLE packages ADD COLUMN acr TEXT;");
+    db.exec("ALTER TABLE packages ADD COLUMN radio_path TEXT;");
     // Migrate existing notes to diagnostic
     db.exec("UPDATE packages SET diagnostic = note WHERE diagnostic IS NULL AND note IS NOT NULL;");
-    console.log('[System] Migration: Added "diagnostic" and "acr" to "packages" table.');
+    console.log('[System] Migration: Added "diagnostic", "acr", and "radio_path" to "packages" table.');
   } catch (err) {
     if (!err.message.includes("duplicate column name")) {
        console.error('[System] Migration error (packages clinical fields):', err.message);
@@ -356,7 +357,7 @@ function getPackagesByPatient(patientId) {
   }
 }
 
-function createPackage(patient_id, name, total_price, diagnostic, acr) {
+function createPackage(patient_id, name, total_price, diagnostic, acr, radio_path = '') {
   try {
     const lastStmt = db.prepare('SELECT package_id FROM packages ORDER BY id DESC LIMIT 1');
     const last = lastStmt.get();
@@ -366,8 +367,8 @@ function createPackage(patient_id, name, total_price, diagnostic, acr) {
       nextId = `MS-${(num + 1).toString().padStart(3, '0')}`;
     }
 
-    const stmt = db.prepare('INSERT INTO packages (package_id, patient_id, name, total_price, diagnostic, acr) VALUES (?, ?, ?, ?, ?, ?)');
-    const result = stmt.run(nextId, patient_id, name, total_price, diagnostic, acr);
+    const stmt = db.prepare('INSERT INTO packages (package_id, patient_id, name, total_price, diagnostic, acr, radio_path) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    const result = stmt.run(nextId, patient_id, name, total_price, diagnostic, acr, radio_path);
     return { success: true, message: 'Package created successfully', id: result.lastInsertRowid };
   } catch (err) {
     console.error('Database Create Package Error:', err);
@@ -375,10 +376,10 @@ function createPackage(patient_id, name, total_price, diagnostic, acr) {
   }
 }
 
-function updatePackage(id, patient_id, name, total_price, diagnostic, acr) {
+function updatePackage(id, patient_id, name, total_price, diagnostic, acr, radio_path = '') {
   try {
-    const stmt = db.prepare('UPDATE packages SET patient_id = ?, name = ?, total_price = ?, diagnostic = ?, acr = ? WHERE id = ?');
-    stmt.run(patient_id, name, total_price, diagnostic, acr, id);
+    const stmt = db.prepare('UPDATE packages SET patient_id = ?, name = ?, total_price = ?, diagnostic = ?, acr = ?, radio_path = ? WHERE id = ?');
+    stmt.run(patient_id, name, total_price, diagnostic, acr, radio_path, id);
     return { success: true, message: 'Package updated successfully' };
   } catch (err) {
     console.error('Database Update Package Error:', err);

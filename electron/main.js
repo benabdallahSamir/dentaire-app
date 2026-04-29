@@ -111,14 +111,14 @@ app.whenReady().then(() => {
     return getPackages();
   });
 
-  ipcMain.handle('createPackage', async (event, patient_id, name, total_price, diagnostic, acr) => {
+  ipcMain.handle('createPackage', async (event, patient_id, name, total_price, diagnostic, acr, radio_path) => {
     console.log('[IPC] Creating new package in DB');
-    return createPackage(patient_id, name, total_price, diagnostic, acr);
+    return createPackage(patient_id, name, total_price, diagnostic, acr, radio_path);
   });
 
-  ipcMain.handle('updatePackage', async (event, id, patient_id, name, total_price, diagnostic, acr) => {
+  ipcMain.handle('updatePackage', async (event, id, patient_id, name, total_price, diagnostic, acr, radio_path) => {
     console.log('[IPC] Updating package ID:', id);
-    return updatePackage(id, patient_id, name, total_price, diagnostic, acr);
+    return updatePackage(id, patient_id, name, total_price, diagnostic, acr, radio_path);
   });
 
   ipcMain.handle('getPackageById', async (event, id) => {

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { Search, User, Phone, Check } from 'lucide-react';
+import { Search, User, Phone, Check, Edit, Trash2, ChevronRight, Image as ImageIcon } from 'lucide-react';
 
 function SessionManagement() {
   const { t } = useTranslation();
@@ -569,6 +569,16 @@ function SessionManagement() {
                   </div>
 
                   <div>
+                    <label className="block text-[10px] font-bold text-neutral-400 uppercase mb-2 ml-1">Maladie / Antécédents</label>
+                    <input 
+                      type="text" 
+                      value={targetSession.maladi}
+                      onChange={(e) => setTargetSession({...targetSession, maladi: e.target.value})}
+                      className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block text-[10px] font-bold text-neutral-400 uppercase mb-2 ml-1">Package (Optional)</label>
                     <select 
                       value={targetSession.package_id || ''}
@@ -728,16 +738,20 @@ function SessionManagement() {
                         <span className="text-neutral-400 font-bold block mb-1 text-xs uppercase tracking-wider">Notes</span>
                         <p className="font-medium text-neutral-700 bg-white p-3 rounded-xl border border-emerald-50 min-h-[60px]">{viewData.session.note || 'No notes available.'}</p>
                       </div>
-                      {viewData.session.radio_path && (
-                        <div className="pt-2 border-t border-emerald-100/50 mt-2">
+                      <div className="pt-2 border-t border-emerald-100/50 mt-2">
+                        {viewData.session.radio_path ? (
                           <button 
                             onClick={() => window.api.openRadioFile(viewData.session.radio_path)}
                             className="w-full py-3 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
                           >
                             🖼️ Ouvrir Radiographie
                           </button>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="w-full py-3 bg-neutral-50 text-neutral-400 font-medium rounded-xl border border-dashed border-neutral-200 flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider">
+                            🖼️ Pas de radiographie
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -745,14 +759,24 @@ function SessionManagement() {
               <div className="p-6 border-t border-neutral-100 bg-neutral-50 flex justify-end gap-3">
                 <button 
                   onClick={() => {
+                    const sessionId = viewData.session.id;
+                    setIsViewModalOpen(false);
+                    handleDelete(sessionId);
+                  }} 
+                  className="px-8 py-3 bg-red-50 text-red-600 font-black rounded-2xl shadow-sm hover:bg-red-100 transition-all text-[10px] uppercase tracking-widest flex items-center gap-2 border border-red-100"
+                >
+                  🗑️ Supprimer la Session
+                </button>
+                <button 
+                  onClick={() => {
                     setIsViewModalOpen(false);
                     openEditPanel(viewData.session);
                   }} 
-                  className="px-8 py-2.5 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition-all active:scale-95 flex items-center gap-2"
+                  className="px-8 py-3 bg-blue-50 text-blue-600 font-black rounded-2xl shadow-sm hover:bg-blue-100 transition-all text-[10px] uppercase tracking-widest flex items-center gap-2 border border-blue-100"
                 >
-                  📝 Edit Session
+                  📝 Modifier la Session
                 </button>
-                <button onClick={() => setIsViewModalOpen(false)} className="px-8 py-2.5 bg-neutral-800 text-white font-bold rounded-xl shadow-lg hover:bg-neutral-900 transition-all active:scale-95">Close</button>
+                <button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-neutral-200 text-neutral-700 font-black rounded-2xl shadow-sm hover:bg-neutral-50 transition-all text-[10px] uppercase tracking-widest">Fermer</button>
               </div>
             </div>
           </div>

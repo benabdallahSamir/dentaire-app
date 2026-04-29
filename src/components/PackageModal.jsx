@@ -7,6 +7,7 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
   const [patients, setPatients] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [patientSearch, setPatientSearch] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const dropdownRef = useRef(null);
   
   const [formData, setFormData] = useState({
@@ -14,7 +15,8 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
     name: '',
     total_price: '',
     diagnostic: '',
-    acr: ''
+    acr: '',
+    radio_path: ''
   });
 
   useEffect(() => {
@@ -31,9 +33,15 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
           name: targetPackage.name || '',
           total_price: targetPackage.total_price || '',
           diagnostic: targetPackage.diagnostic || '',
-          acr: targetPackage.acr || ''
+          acr: targetPackage.acr || '',
+          radio_path: targetPackage.radio_path || ''
         });
-        setPatientSearch(targetPackage.patient_name || '');
+        if (targetPackage.patient_name) {
+          setPatientSearch(targetPackage.patient_name);
+        } else {
+          const patient = patients.find(p => p.id === targetPackage.patient_id);
+          setPatientSearch(patient ? patient.name : '');
+        }
       } else if (defaultPatientId) {
         // Pre-fill if a default patient ID is passed
         const patient = patients.find(p => String(p.id) === String(defaultPatientId));
@@ -43,7 +51,8 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
             name: '',
             total_price: '',
             diagnostic: '',
-            acr: ''
+            acr: '',
+            radio_path: ''
           });
           setPatientSearch(patient.name);
         }
@@ -53,7 +62,8 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
           name: '',
           total_price: '',
           diagnostic: '',
-          acr: ''
+          acr: '',
+          radio_path: ''
         });
         setPatientSearch('');
       }
@@ -85,6 +95,23 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
     setFormData({ ...formData, patient_id: p.id });
     setPatientSearch(p.name);
     setIsDropdownOpen(false);
+  };
+
+  const handleRadioSelect = async () => {
+    const filePath = await window.api.selectRadioFile();
+    if (filePath) {
+      setFormData({ ...formData, radio_path: filePath });
+    }
+  };
+
+  const handleRadioDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const filePath = file.path; 
+      setFormData({ ...formData, radio_path: filePath });
+    }
   };
 
   const handleSubmit = (e) => {
@@ -252,6 +279,24 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
                     placeholder="Describe the treatment plan diagnostic..."
                     className="w-full pl-16 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500 transition-all font-medium"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-3 ml-1">
+                  Radiographie
+                </label>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={handleRadioSelect} onDragOver={e => { e.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={handleRadioDrop}
+                    className={`flex-1 flex flex-col items-center justify-center gap-2 border-2 border-dashed py-6 rounded-2xl transition-all ${isDragging ? 'border-blue-500 bg-blue-50/50' : 'border-neutral-200 hover:border-blue-300 hover:bg-neutral-50'}`}
+                  >
+                    <span className="text-[10px] font-bold text-neutral-500">{formData.radio_path ? 'Image sélectionnée (cliquez pour changer)' : 'Cliquer ou glisser une image'}</span>
+                  </button>
+                  {formData.radio_path && (
+                    <button type="button" onClick={() => setFormData({...formData, radio_path: ''})} className="p-3 bg-red-50 text-red-400 rounded-xl hover:bg-red-100">
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
