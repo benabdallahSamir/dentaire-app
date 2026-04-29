@@ -5,13 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { 
   Users, 
-  Calendar, 
-  Clock, 
-  BookOpen, 
-  UserCircle, 
   Settings, 
   LogOut, 
-  ChevronLeft 
+  ChevronLeft,
+  LayoutDashboard,
+  CalendarDays,
+  Archive
 } from 'lucide-react';
 
 function Sidebar({ isVisible, toggleVisibility }) {
@@ -43,11 +42,10 @@ function Sidebar({ isVisible, toggleVisibility }) {
   const isAdmin = user.role === 'admin';
 
   const navItems = [
+    isAdmin && { label: t('sidebar.dashboard', { defaultValue: 'Dashboard' }), icon: <LayoutDashboard size={18} />, path: '/dashboard' },
     { label: t('sidebar.patient'), icon: <Users size={18} />, path: '/patient' },
-    { label: t('sidebar.rendezVous'), icon: <Calendar size={18} />, path: '/appointments' },
-    { label: t('sidebar.session'), icon: <Clock size={18} />, path: '/sessions' },
-    { label: t('sidebar.multiple_sessions'), icon: <BookOpen size={18} />, path: '/multiple-sessions' },
-    isAdmin && { label: t('sidebar.users'), icon: <UserCircle size={18} />, path: '/users' },
+    { label: t('sidebar.sessions', { defaultValue: 'Sessions' }), icon: <CalendarDays size={18} />, path: '/sessions' },
+    { label: t('sidebar.packages', { defaultValue: 'Packages' }), icon: <Archive size={18} />, path: '/packages' },
     { label: t('sidebar.setting'), icon: <Settings size={18} />, path: '/settings' },
   ].filter(Boolean);
 

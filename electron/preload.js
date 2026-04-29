@@ -26,8 +26,8 @@ contextBridge.exposeInMainWorld('api', {
   getPackageById: (id) => ipcRenderer.invoke('getPackageById', id),
   getPackagesByPatient: (patientId) => ipcRenderer.invoke('getPackagesByPatient', patientId),
   getSessionsByPackage: (packageId) => ipcRenderer.invoke('getSessionsByPackage', packageId),
-  createPackage: (patient_id, name, total_price, note) => ipcRenderer.invoke('createPackage', patient_id, name, total_price, note),
-  updatePackage: (id, name, total_price, note) => ipcRenderer.invoke('updatePackage', id, name, total_price, note),
+  createPackage: (patient_id, name, total_price, diagnostic, acr) => ipcRenderer.invoke('createPackage', patient_id, name, total_price, diagnostic, acr),
+  updatePackage: (id, patient_id, name, total_price, diagnostic, acr) => ipcRenderer.invoke('updatePackage', id, patient_id, name, total_price, diagnostic, acr),
   deletePackage: (id) => ipcRenderer.invoke('deletePackage', id),
   getPrinters: () => ipcRenderer.invoke('getPrinters'),
   printThermalReceipt: (htmlContent, printerName) => ipcRenderer.invoke('printThermalReceipt', htmlContent, printerName)

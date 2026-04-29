@@ -14,6 +14,9 @@ function createWindow() {
     }
   });
 
+  // Remove the default application menu completely
+  mainWindow.setMenu(null);
+
   // Load the Vite dev server URL in development mode
   mainWindow.loadURL('http://localhost:5173');
 }
@@ -108,14 +111,14 @@ app.whenReady().then(() => {
     return getPackages();
   });
 
-  ipcMain.handle('createPackage', async (event, patient_id, name, total_price, note) => {
+  ipcMain.handle('createPackage', async (event, patient_id, name, total_price, diagnostic, acr) => {
     console.log('[IPC] Creating new package in DB');
-    return createPackage(patient_id, name, total_price, note);
+    return createPackage(patient_id, name, total_price, diagnostic, acr);
   });
 
-  ipcMain.handle('updatePackage', async (event, id, name, total_price, note) => {
+  ipcMain.handle('updatePackage', async (event, id, patient_id, name, total_price, diagnostic, acr) => {
     console.log('[IPC] Updating package ID:', id);
-    return updatePackage(id, name, total_price, note);
+    return updatePackage(id, patient_id, name, total_price, diagnostic, acr);
   });
 
   ipcMain.handle('getPackageById', async (event, id) => {

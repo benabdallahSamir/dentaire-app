@@ -103,7 +103,7 @@ function PatientRecord() {
 
   const handleSavePackage = async (formData) => {
     try {
-      const result = await window.api.createPackage(formData.patient_id, formData.name, formData.total_price, formData.note);
+      const result = await window.api.createPackage(formData.patient_id, formData.name, formData.total_price, formData.diagnostic, formData.acr);
       if (result.success) {
         Swal.fire({ icon: 'success', title: 'Plan Établi', text: result.message, timer: 2000, showConfirmButton: false });
         setIsPackageModalOpen(false);

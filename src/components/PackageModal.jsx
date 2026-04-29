@@ -13,7 +13,8 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
     patient_id: '',
     name: '',
     total_price: '',
-    note: ''
+    diagnostic: '',
+    acr: ''
   });
 
   useEffect(() => {
@@ -29,7 +30,8 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
           patient_id: targetPackage.patient_id || '',
           name: targetPackage.name || '',
           total_price: targetPackage.total_price || '',
-          note: targetPackage.note || ''
+          diagnostic: targetPackage.diagnostic || '',
+          acr: targetPackage.acr || ''
         });
         setPatientSearch(targetPackage.patient_name || '');
       } else if (defaultPatientId) {
@@ -40,7 +42,8 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
             patient_id: patient.id,
             name: '',
             total_price: '',
-            note: ''
+            diagnostic: '',
+            acr: ''
           });
           setPatientSearch(patient.name);
         }
@@ -49,7 +52,8 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
           patient_id: '',
           name: '',
           total_price: '',
-          note: ''
+          diagnostic: '',
+          acr: ''
         });
         setPatientSearch('');
       }
@@ -129,13 +133,12 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
                         setPatientSearch(e.target.value);
                         setIsDropdownOpen(true);
                       }}
-                      disabled={isEditMode}
-                      className="w-full pl-16 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500 transition-all font-bold shadow-sm disabled:opacity-50"
+                      className="w-full pl-16 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500 transition-all font-bold shadow-sm"
                       required
                     />
                   </div>
 
-                  {isDropdownOpen && !isEditMode && (
+                  {isDropdownOpen && (
                     <div className="absolute w-full mt-3 bg-white border border-neutral-200 rounded-3xl shadow-2xl z-10 max-h-[350px] overflow-auto ring-1 ring-black/5 animate-in fade-in slide-in-from-top-4 duration-300 p-2">
                       {filteredPatients.length > 0 ? (
                         <div className="space-y-1">
@@ -218,17 +221,35 @@ function PackageModal({ isOpen, onClose, onSave, targetPackage, isEditMode, defa
 
               <div>
                 <label className="block text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-3 ml-1">
-                  Plan Notes & Details
+                  Acte / ACR
+                </label>
+                <div className="relative">
+                   <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">
+                    <FileText className="text-neutral-500" size={16} />
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.acr}
+                    onChange={(e) => setFormData({ ...formData, acr: e.target.value })}
+                    placeholder="e.g. Consultation..."
+                    className="w-full pl-16 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500 transition-all font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-3 ml-1">
+                  Diagnostic
                 </label>
                 <div className="relative">
                    <div className="absolute left-4 top-5 w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">
                     <FileText className="text-neutral-500" size={16} />
                   </div>
                   <textarea
-                    value={formData.note}
-                    onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                    rows="5"
-                    placeholder="Describe the treatment plan scope..."
+                    value={formData.diagnostic}
+                    onChange={(e) => setFormData({ ...formData, diagnostic: e.target.value })}
+                    rows="3"
+                    placeholder="Describe the treatment plan diagnostic..."
                     className="w-full pl-16 pr-4 py-4 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm focus:outline-none focus:border-blue-500 transition-all font-medium"
                   />
                 </div>

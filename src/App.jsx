@@ -3,15 +3,12 @@ import Auth from './pages/Auth';
 import "./global.css";
 import { ThemeProvider } from './context/ThemeContext';
 // Pages
-import Patients from './pages/Patients';
 import PatientManagement from './pages/PatientManagement';
-import Appointments from './pages/Appointments';
-import Sessions from './pages/Sessions';
-import Users from './pages/Users';
-import Settings from './pages/Settings';
-import MultipleSessions from './pages/MultipleSessions';
 import PatientRecord from './pages/PatientRecord';
-import SessionRecord from './pages/SessionRecord';
+import Settings from './pages/Settings';
+import Dashboard from './pages/Dashboard';
+import SessionManagement from './pages/SessionManagement';
+import PackageManagement from './pages/PackageManagement';
 
 // A simple protected route component
 function ProtectedRoute({ children, requiredRole }) {
@@ -39,17 +36,13 @@ function App() {
       <HashRouter>
         <Routes>
           <Route path="/login" element={<Auth />} />
-          {/* Redirect to patients by default now that dashboard is removed */}
           <Route path="/" element={<Navigate to="/patient" replace />} />
           <Route path="/patient" element={<ProtectedRoute><PatientManagement /></ProtectedRoute>} />
           <Route path="/patient/:id" element={<ProtectedRoute><PatientRecord /></ProtectedRoute>} />
-          <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
-          <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
-          <Route path="/session/:id" element={<ProtectedRoute><SessionRecord /></ProtectedRoute>} />
-          <Route path="/multiple-sessions" element={<ProtectedRoute><MultipleSessions /></ProtectedRoute>} />
-          <Route path="/multiple-sessions/:id" element={<ProtectedRoute><MultipleSessions /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute requiredRole="admin"><Users /></ProtectedRoute>} />
+          <Route path="/sessions" element={<ProtectedRoute><SessionManagement /></ProtectedRoute>} />
+          <Route path="/packages" element={<ProtectedRoute><PackageManagement /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute requiredRole="admin"><Dashboard /></ProtectedRoute>} />
         </Routes>
       </HashRouter>
     </ThemeProvider>

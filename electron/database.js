@@ -58,13 +58,16 @@ function initDB() {
     );
   `);
 
-  // Migration: Add note to packages if it doesn't exist
+  // Migration: Add clinical fields to packages
   try {
-    db.exec("ALTER TABLE packages ADD COLUMN note TEXT;");
-    console.log('[System] Migration: Added "note" column to "packages" table.');
+    db.exec("ALTER TABLE packages ADD COLUMN diagnostic TEXT;");
+    db.exec("ALTER TABLE packages ADD COLUMN acr TEXT;");
+    // Migrate existing notes to diagnostic
+    db.exec("UPDATE packages SET diagnostic = note WHERE diagnostic IS NULL AND note IS NOT NULL;");
+    console.log('[System] Migration: Added "diagnostic" and "acr" to "packages" table.');
   } catch (err) {
     if (!err.message.includes("duplicate column name")) {
-       console.error('[System] Migration error (packages note):', err.message);
+       console.error('[System] Migration error (packages clinical fields):', err.message);
     }
   }
 
@@ -329,7 +332,7 @@ function getSessionById(id) {
 function getPackages() {
   try {
     const stmt = db.prepare(`
-      SELECT pk.*, p.name as patient_name
+      SELECT pk.*, p.name as patient_name, (SELECT COUNT(*) FROM sessions WHERE package_id = pk.id) as session_count
       FROM packages pk
       JOIN patients p ON pk.patient_id = p.id
       ORDER BY pk.id DESC
@@ -353,7 +356,7 @@ function getPackagesByPatient(patientId) {
   }
 }
 
-function createPackage(patient_id, name, total_price, note) {
+function createPackage(patient_id, name, total_price, diagnostic, acr) {
   try {
     const lastStmt = db.prepare('SELECT package_id FROM packages ORDER BY id DESC LIMIT 1');
     const last = lastStmt.get();
@@ -363,8 +366,8 @@ function createPackage(patient_id, name, total_price, note) {
       nextId = `MS-${(num + 1).toString().padStart(3, '0')}`;
     }
 
-    const stmt = db.prepare('INSERT INTO packages (package_id, patient_id, name, total_price, note) VALUES (?, ?, ?, ?, ?)');
-    const result = stmt.run(nextId, patient_id, name, total_price, note);
+    const stmt = db.prepare('INSERT INTO packages (package_id, patient_id, name, total_price, diagnostic, acr) VALUES (?, ?, ?, ?, ?, ?)');
+    const result = stmt.run(nextId, patient_id, name, total_price, diagnostic, acr);
     return { success: true, message: 'Package created successfully', id: result.lastInsertRowid };
   } catch (err) {
     console.error('Database Create Package Error:', err);
@@ -372,10 +375,10 @@ function createPackage(patient_id, name, total_price, note) {
   }
 }
 
-function updatePackage(id, name, total_price, note) {
+function updatePackage(id, patient_id, name, total_price, diagnostic, acr) {
   try {
-    const stmt = db.prepare('UPDATE packages SET name = ?, total_price = ?, note = ? WHERE id = ?');
-    stmt.run(name, total_price, note, id);
+    const stmt = db.prepare('UPDATE packages SET patient_id = ?, name = ?, total_price = ?, diagnostic = ?, acr = ? WHERE id = ?');
+    stmt.run(patient_id, name, total_price, diagnostic, acr, id);
     return { success: true, message: 'Package updated successfully' };
   } catch (err) {
     console.error('Database Update Package Error:', err);
